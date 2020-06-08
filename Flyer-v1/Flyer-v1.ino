@@ -38,5 +38,5 @@ void CO2_config(){
   Serial1.print("<CELL TEMP>FALSE</CELL TEMP>\n");
   Serial1.print("<CO2>TRUE</CO2>\n<CO2ABS>FALSE</CO2ABS>\n<CELLPRES>FALSE</CELLPRES>\n<IVOLT>FALSE</IVOLT>\n");
   Serial1.print("</RS232>\n</LI820>\n");
-  Serial1.println(Serial1.readString());
+  Serial.println(Serial1.readString());
 }
