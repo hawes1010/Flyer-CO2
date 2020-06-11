@@ -13,8 +13,9 @@ delay(500);
 void loop() {
   // put your main code here, to run repeatedly:
   //Serial.print(Serial.read());
-if (Serial.available()){
+if (Serial.available()>0){
 char comm = Serial.read();
+Serial.println(comm);
 switch (comm) {
   case 'C': //Calibrate the sensor
     Calibrate();
@@ -31,7 +32,6 @@ switch (comm) {
    case 'z': // Zero Span
    zero();
     break;
-    
   default:
      Serial.println("Invalid command, try again");
     break;
