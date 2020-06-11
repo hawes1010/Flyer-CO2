@@ -23,13 +23,13 @@ switch (comm) {
     CO2_read();
     break;
   case 's': // Single Span
-   
+   ask_value(1);
     break;
    case 't': // Two Span
-   
+   ask_value(2);
     break;
    case 'z': // Zero Span
-   
+   zero();
     break;
     
   default:
@@ -40,6 +40,27 @@ switch (comm) {
 delay(100);
 
 }
+
+void ask_value(int span){
+
+if (span == 1){
+Serial.println("Please input the value for the span");
+while (!Serial.available());
+long span1 = Serial.parseInt();
+single_span(span1);
+}
+if (span == 2){
+Serial.println("Please input the 1st value for the span");
+ while (!Serial.available());
+long span1 = Serial.parseInt();
+Serial.println("Please input the 2nd value for the span");
+while (!Serial.available());
+long span2 = Serial.parseInt();
+double_span(span1,span2);
+}
+ 
+}
+
 
 void CO2_read(){
 // Send request to LICOR
@@ -100,11 +121,52 @@ void Calibrate_time(){
   Serial.println( "75 seconds have passed for calibration");
 }
 
+void zero_time(){
+  unsigned long currentMillis = millis();
+  unsigned long previousMillis = millis();
+
+  while(currentMillis - previousMillis < 10000 ) {
+   currentMillis = millis();
+    if (Serial1.available()){
+     return;
+    }
+  }
+  Serial.println( "10 seconds have passed for zero/span");
+}
+
 void zero(){
-  // get date
+  String date = "2020-06-11";
   char buf[180];
-sprintf(buf, "<LI820>\n<CAL>\n<DATE>%d</DATE>\n<CO2ZERO>TRUE</CO2ZERO>\n</CAL>\n</LI820>", date);
+sprintf(buf, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2ZERO>TRUE</CO2ZERO>\n</CAL>\n</LI820>", date);
 Serial1.println(buf);
 //Serial1.print("<LI820>\n<CAL>\n<DATE>YYYY-MM-DD</DATE>\n<CO2ZERO>TRUE</CO2ZERO>\n</CAL>\n</LI820>");
+zero_time();
+String zero1 = Serial1.readString();
+Serial.println(zero1);
+}
 
+void single_span(int span){
+String date = "2020-06-11";
+  char buf[180];
+sprintf(buf, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2SPAN>%i</CO2SPAN>\n</CAL>\n</LI820>", date,span);
+Serial1.print(buf);
+zero_time();
+String spans = Serial1.readString();
+Serial.println(spans);
+}
+
+void double_span(int span1, int span2){
+String date = "2020-06-11";
+  char buf[180];
+sprintf(buf, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2SPAN_A>%i</CO2SPAN_A>\n</CAL>\n</LI820>", date,span1);
+Serial1.print(buf);
+zero_time();
+String confirm = Serial1.readString();
+bool span_success = check_ack(confirm);
+if (span_success){
+char buf2[180];
+sprintf(buf2, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2SPAN_B>%i</CO2SPAN_B>\n</CAL>\n</LI820>", date,span2);
+Serial1.print(buf2);
+
+}
 }
