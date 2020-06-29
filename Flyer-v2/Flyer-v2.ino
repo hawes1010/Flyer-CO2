@@ -1,6 +1,10 @@
+#include <TimeLib.h>
+#include <Wire.h>
+
 long interval = 75000;
 String date = "";
 void setup() {
+//setSyncProvider(getTeensy3Time);
   // put your setup code here, to run once:
 Serial1.begin(9600);
 Serial.begin(9600);
@@ -23,9 +27,6 @@ switch (comm) {
   case 'c': //CO2 Current data
     CO2_read();
     break;
-  case 's': // Single Span
-   ask_value(1);
-    break;
    case 't': // Two Span
    ask_value(2);
     break;
@@ -47,7 +48,7 @@ if (span == 1){
 Serial.println("Please input the value for the span");
 while (!Serial.available());
 long span1 = Serial.parseInt();
-single_span(span1);
+//single_span(span1);
 }
 if (span == 2){
 Serial.println("Please input the 1st value for the span");
@@ -135,7 +136,7 @@ void zero_time(){
 }
 
 void zero(){
-  String date = "2020-06-11";
+  String date = date_build();
   char buf[180];
 sprintf(buf, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2ZERO>TRUE</CO2ZERO>\n</CAL>\n</LI820>", date);
 Serial1.println(buf);
@@ -145,8 +146,17 @@ String zero1 = Serial1.readString();
 Serial.println(zero1);
 }
 
-void single_span(int span){
-String date = "2020-06-11";
+void span_a(int span){
+String date = date_build();
+  char buf[180];
+sprintf(buf, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2SPAN>%i</CO2SPAN>\n</CAL>\n</LI820>", date,span);
+Serial1.print(buf);
+zero_time();
+String spans = Serial1.readString();
+Serial.println(spans);
+}
+void span_b(int span){
+String date = date_build();
   char buf[180];
 sprintf(buf, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2SPAN>%i</CO2SPAN>\n</CAL>\n</LI820>", date,span);
 Serial1.print(buf);
@@ -156,7 +166,7 @@ Serial.println(spans);
 }
 
 void double_span(int span1, int span2){
-String date = "2020-06-11";
+String date = date_build();
   char buf[180];
 sprintf(buf, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2SPAN_A>%i</CO2SPAN_A>\n</CAL>\n</LI820>", date,span1);
 Serial1.print(buf);
@@ -170,3 +180,18 @@ Serial1.print(buf2);
 
 }
 }
+
+
+String date_build(){
+  int year_t = year();
+  int month_t = month();
+  int day_t = day();
+
+ String time_value = ("%i-%i-%i",year_t, month_t, day_t);
+ return time_value;
+}
+
+
+
+
+
