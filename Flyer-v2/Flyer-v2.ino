@@ -27,9 +27,12 @@ switch (comm) {
   case 'c': //CO2 Current data
     CO2_read();
     break;
-   case 't': // Two Span
-   ask_value(2);
+   case 'a': // Two Span
+   ask_value(1);
     break;
+   case 'b':
+   ask_value(2);
+   break;
    case 'z': // Zero Span
    zero();
     break;
@@ -45,19 +48,13 @@ delay(100);
 void ask_value(int span){
 
 if (span == 1){
-Serial.println("Please input the value for the span");
-while (!Serial.available());
-long span1 = Serial.parseInt();
+int spanval_a = ask_span();
+double_span_a(spanval_a);
 //single_span(span1);
 }
 if (span == 2){
-Serial.println("Please input the 1st value for the span");
- while (!Serial.available());
-long span1 = Serial.parseInt();
-Serial.println("Please input the 2nd value for the span");
-while (!Serial.available());
-long span2 = Serial.parseInt();
-double_span(span1,span2);
+int spanval_b = ask_span();
+double_span_b(spanval_b);
 }
  
 }
@@ -81,6 +78,12 @@ else
 return false; 
 }
 
+bool check_error(String s){
+if (s == "<ERROR>")
+return true;
+else 
+return false; 
+}
 
 void CO2_config(){
   Serial1.print("<LI820>\n<CFG>\n<OUTRATE>0</OUTRATE>\n</CFG>\n");
@@ -92,14 +95,18 @@ void CO2_config(){
   Serial1.print("</RS232>\n</LI820>\n");
   Serial.println(Serial1.readString());
 }
+
+
 void Calibrate(){
 Serial1.print("<LI820>\n<CAL>\n<DATE>{iso date}</DATE>\n<CO2ZERO>{bool}</CO2ZERO>\n<CO2SPAN>{int}</CO2SPAN>\n");
 Serial1.print("<CO2SPAN_A>{int}</CO2SPAN_A>\n<CO2SPAN_B>{int}</CO2SPAN_B>\n</CAL>\n</LI820>\n");
 String response = Serial1.readString();
+
 if (!check_ack(response)){
 Serial.println("ERROR with Calibration");
 return;
 }
+
 Calibrate_time();
 String cal_1 = Serial1.readString();
 String cal_2 = Serial1.readString();
@@ -141,44 +148,54 @@ void zero(){
 sprintf(buf, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2ZERO>TRUE</CO2ZERO>\n</CAL>\n</LI820>", date);
 Serial1.println(buf);
 //Serial1.print("<LI820>\n<CAL>\n<DATE>YYYY-MM-DD</DATE>\n<CO2ZERO>TRUE</CO2ZERO>\n</CAL>\n</LI820>");
-zero_time();
+delay(500);
 String zero1 = Serial1.readString();
-Serial.println(zero1);
+bool zero_succ = check_ack(zero1);
 }
 
-void span_a(int span){
-String date = date_build();
-  char buf[180];
-sprintf(buf, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2SPAN>%i</CO2SPAN>\n</CAL>\n</LI820>", date,span);
-Serial1.print(buf);
-zero_time();
-String spans = Serial1.readString();
-Serial.println(spans);
-}
-void span_b(int span){
-String date = date_build();
-  char buf[180];
-sprintf(buf, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2SPAN>%i</CO2SPAN>\n</CAL>\n</LI820>", date,span);
-Serial1.print(buf);
-zero_time();
-String spans = Serial1.readString();
-Serial.println(spans);
-}
-
-void double_span(int span1, int span2){
+void double_span_a(int span1){
 String date = date_build();
   char buf[180];
 sprintf(buf, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2SPAN_A>%i</CO2SPAN_A>\n</CAL>\n</LI820>", date,span1);
 Serial1.print(buf);
-zero_time();
+delay(2000);
 String confirm = Serial1.readString();
 bool span_success = check_ack(confirm);
 if (span_success){
+Serial.println("Span A Acknowledged");
+}
+else if(check_error(confirm)) {
+ Serial.println("Span A Failed");
+}
+zero_time();
+String error = Serial1.readString();
+if(check_error(error))
+Serial.println("ERROR!");
+else 
+Serial.println("SPAN A Success");
+}
+
+
+void double_span_b(int span2){
+String date = date_build();
 char buf2[180];
 sprintf(buf2, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2SPAN_B>%i</CO2SPAN_B>\n</CAL>\n</LI820>", date,span2);
 Serial1.print(buf2);
-
+delay(2000);
+String confirm = Serial1.readString();
+bool span_success = check_ack(confirm);
+if (span_success){
+Serial.println("Span B Acknowledged");
 }
+else if(check_error(confirm)) {
+ Serial.println("Span A Failed");
+}
+zero_time();
+String error = Serial1.readString();
+if(check_error(error))
+Serial.println("ERROR!");
+else 
+Serial.println("SPAN A Success");
 }
 
 
@@ -189,6 +206,22 @@ String date_build(){
 
  String time_value = ("%i-%i-%i",year_t, month_t, day_t);
  return time_value;
+}
+
+int ask_span(){
+char rx_byte = 0;
+String rx_str = "";
+Serial.println("Type in concentration in integer form");
+delay (50);
+while (Serial.available() > 0){
+  rx_byte = Serial.read();       // get the character
+    if (rx_byte != '\n') {
+      // a character of the string was received
+      rx_str += rx_byte;
+    }
+}
+int val = rx_str.toInt();
+return val;
 }
 
 
