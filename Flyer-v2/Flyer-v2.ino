@@ -27,10 +27,10 @@ switch (comm) {
   case 'c': //CO2 Current data
     CO2_read();
     break;
-   case 'a': // Two Span
+   case 'a': // Two Span A
    ask_value(1);
     break;
-   case 'b':
+   case 'b': // Two Span B
    ask_value(2);
    break;
    case 'z': // Zero Span
@@ -188,7 +188,7 @@ if (span_success){
 Serial.println("Span B Acknowledged");
 }
 else if(check_error(confirm)) {
- Serial.println("Span A Failed");
+ Serial.println("Span B Failed");
 }
 zero_time();
 String error = Serial1.readString();
@@ -223,5 +223,3 @@ while (Serial.available() > 0){
 int val = rx_str.toInt();
 return val;
 }
-
-
