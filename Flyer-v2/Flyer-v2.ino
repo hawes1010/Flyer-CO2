@@ -36,6 +36,9 @@ switch (comm) {
    case 'z': // Zero Span
    zero();
     break;
+    case 's':
+    single_span();
+    break;
   default:
      Serial.println("Invalid command, try again");
     break;
@@ -43,6 +46,20 @@ switch (comm) {
 }
 delay(100);
 
+}
+
+void single_span(){
+  int span0 = ask_span();
+  String date = date_build();
+  char buf[180];
+sprintf(buf, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2SPAN>%i</CO2SPAN>\n</CAL>\n</LI820>", date,span0);
+Serial1.print(buf);
+delay(2000);
+String err = Serial1.readString();
+if (check_error(err))
+Serial.println("FAILED SINGLE SPAN");
+else 
+Serial.println("Returned message is: " + err);
 }
 
 void ask_value(int span){
@@ -215,7 +232,7 @@ Serial.println("Type in concentration in integer form");
 delay (50);
 while (Serial.available() > 0){
   rx_byte = Serial.read();       // get the character
-    if (rx_byte != '\n') {
+    if (rx_byte != '\n' || '\r') {
       // a character of the string was received
       rx_str += rx_byte;
     }
