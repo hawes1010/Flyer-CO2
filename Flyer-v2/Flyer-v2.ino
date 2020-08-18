@@ -11,15 +11,19 @@ Serial.begin(9600);
 Serial1.setTimeout(2000);
  
 CO2_config();
+Serial.println("Commands are: 's' for single span, 'z' for zero, 'C' for calibrate, and 'c' for Co2 Read");
 delay(500);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   //Serial.print(Serial.read());
+if(Serial1.available()>0)
+Serial.println(Serial1.readString()+Serial1.readString());
 if (Serial.available()>0){
 char comm = Serial.read();
 Serial.println(comm);
+Serial.flush();
 switch (comm) {
   case 'C': //Calibrate the sensor
     Calibrate();
@@ -54,12 +58,16 @@ void single_span(){
   char buf[180];
 sprintf(buf, "<LI820>\n<CAL>\n<DATE>%s</DATE>\n<CO2SPAN>%i</CO2SPAN>\n</CAL>\n</LI820>", date,span0);
 Serial1.print(buf);
-delay(2000);
+//delay(2000);
 String err = Serial1.readString();
 if (check_error(err))
 Serial.println("FAILED SINGLE SPAN");
 else 
 Serial.println("Returned message is: " + err);
+if (Serial.available()>0){
+String dates = Serial1.readString();
+Serial.println("Returned message is: "+ dates);
+}
 }
 
 void ask_value(int span){
@@ -228,15 +236,18 @@ String date_build(){
 int ask_span(){
 char rx_byte = 0;
 String rx_str = "";
+
 Serial.println("Type in concentration in integer form");
-delay (50);
-while (Serial.available() > 0){
+delay (10000);
+while (Serial.available()>0){
   rx_byte = Serial.read();       // get the character
+  //Serial.println(rx_byte);
     if (rx_byte != '\n' || '\r') {
       // a character of the string was received
       rx_str += rx_byte;
     }
 }
 int val = rx_str.toInt();
+Serial.println(val);
 return val;
 }
